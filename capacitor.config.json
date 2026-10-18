@@ -1,0 +1,6 @@
+{
+  "appId": "com.fiveminds.study",
+  "appName": "خمس عقول",
+  "webDir": "www",
+  "plugins": { "CapacitorHttp": { "enabled": true } }
+}
