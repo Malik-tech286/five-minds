@@ -35,11 +35,16 @@ main{max-width:720px;margin:0 auto;padding:4px 16px calc(40px + env(safe-area-in
 .chips{display:flex;gap:8px;margin:4px 0 14px;flex-wrap:wrap}
 .chip{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 16px;font:inherit;cursor:pointer}
 .chip[aria-pressed=true]{background:linear-gradient(135deg,var(--ind),var(--pur));color:#fff;border-color:transparent}
+.quick-prompts{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;margin-bottom:10px;scrollbar-width:none}
+.q-chip{background:rgba(255,255,255,.15);border:0;color:#fff;border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;white-space:nowrap;cursor:pointer}
 #go{display:block;margin:6px auto 20px;background:var(--pink);color:#fff;border:0;border-radius:999px;padding:12px 48px;font:inherit;font-weight:700;box-shadow:0 8px 18px rgba(240,24,154,.35);cursor:pointer}
 #go:disabled{background:#c9c6d6;box-shadow:none}
 :focus-visible{outline:3px solid var(--pink);outline-offset:2px}
 .final{background:var(--card);border-radius:14px;box-shadow:var(--sh);border-top:4px solid var(--pink);padding:10px 18px 16px;margin-bottom:18px}
-.final h2{margin:4px 0;font-size:1.1rem;display:flex;align-items:center;gap:8px}
+.final h2{margin:4px 0;font-size:1.1rem;display:flex;align-items:center;justify-content:space-between}
+.final-title-group{display:flex;align-items:center;gap:8px}
+.actions-group{display:flex;gap:6px}
+.act-btn{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font:inherit;font-size:.8rem;color:var(--ink);cursor:pointer}
 .final h2 small{color:var(--mut);font-weight:400;font-size:.8rem}
 .okc{display:none;width:22px;height:22px;border-radius:50%;background:var(--pink);color:#fff;font-size:.8rem;align-items:center;justify-content:center}
 .final.done .okc{display:inline-flex}
@@ -55,7 +60,7 @@ hr{border:0;border-top:1px solid var(--line);margin:8px 0}
 .item.bad::before{background:var(--pink);border-color:var(--pink)}
 summary{cursor:pointer;font-weight:700}
 summary span{font-weight:400;color:var(--mut);margin-inline-start:10px;font-size:.85rem}
-#scrim{position:fixed;inset:0;background:rgba(10,8,30,.5);opacity:0;pointer-events:none;transition:opacity .25s;z-index:10}
+#scrim{position:fixed;inset:0;background:rgba(10,8,30,.5);opacity:0;pointer-events:none;transition:opacity .25s;z-index:10;cursor:pointer}
 #scrim.open{opacity:1;pointer-events:auto}
 #drawer{position:fixed;top:0;bottom:0;left:0;width:min(92vw,440px);background:var(--card);box-shadow:var(--sh);transform:translateX(-105%);transition:transform .25s;z-index:20;overflow-y:auto;padding:calc(env(safe-area-inset-top) + 16px) 18px 28px}
 #drawer.open{transform:none}
@@ -64,6 +69,9 @@ summary span{font-weight:400;color:var(--mut);margin-inline-start:10px;font-size
 .prov{margin:14px 0}
 .prov input{display:block;width:100%;margin-top:6px;font:inherit;font-size:.9rem;direction:ltr;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
 .note{color:var(--mut);font-size:.88rem}
+.history-section{margin-top:20px;border-top:1px solid var(--line);padding-top:10px}
+.history-section h3{margin:0 0 8px;font-size:1rem}
+.history-item{background:var(--bg);padding:8px 10px;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #splash{position:fixed;inset:0;z-index:30;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--ind);transition:opacity .4s}
 #splash.hide{opacity:0;pointer-events:none}
 #splash .logo{font-size:2rem;color:var(--ind)}
@@ -83,6 +91,12 @@ summary span{font-weight:400;color:var(--mut);margin-inline-start:10px;font-size
 </div>
 <label for="q">الدرس أو السؤال</label>
 <textarea id="q" rows="2" placeholder="مثال: اشرحلي نظرية فيثاغورس"></textarea>
+<div class="quick-prompts">
+<button class="q-chip" onclick="setQ('اشرحلي نظرية فيثاغورس')">نظرية فيثاغورس</button>
+<button class="q-chip" onclick="setQ('الفرق بين اسم الفاعل واسم المفعول')">اسم الفاعل والمفعول</button>
+<button class="q-chip" onclick="setQ('لخص أحداث الدولة العباسية')">الدولة العباسية</button>
+<button class="q-chip" onclick="setQ('ما هي قوانين نيوتن للحركة؟')">قوانين نيوتن</button>
+</div>
 <svg class="wave" viewBox="0 0 400 46" preserveAspectRatio="none" aria-hidden="true"><path class="w1" d="M0 22C80 0 140 44 220 24S340 6 400 20V46H0Z"/><path class="w2" d="M0 30C90 10 150 46 230 30S350 14 400 28V46H0Z"/></svg>
 </header>
 <main>
@@ -97,9 +111,11 @@ summary span{font-weight:400;color:var(--mut);margin-inline-start:10px;font-size
 <h2>الإعدادات <button id="close" aria-label="إغلاق">×</button></h2>
 <p class="note">حط مفتاح (API key) لأي أداة عايز تشغّلها. المفاتيح محفوظة على جهازك بس. أي مفتاح فاضي، الأداة دي بتتخطى. الموديل الفاضي بيستخدم الافتراضي.</p>
 <div id="cfg"></div>
+<div class="history-section"><h3>سجل الأسئلة السابقة</h3><div id="historyList"></div></div>
 </aside>
 <script>
 const $=id=>document.getElementById(id);
+const setQ=v=>{$("q").value=v};
 const NAMES={claude:"Claude",openai:"ChatGPT",deepseek:"DeepSeek",perplexity:"Perplexity",gemini:"Gemini",groq:"Groq",openrouter:"OpenRouter"};
 const DEF={claude:"claude-sonnet-5-5",openai:"gpt-4o-mini",deepseek:"deepseek-chat",perplexity:"sonar",gemini:"gemini-3.8-flash",groq:"openai/gpt-oss-120b",openrouter:"openrouter/free"};
 const ROLES={
@@ -115,7 +131,7 @@ const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 const tex=s=>s.replace(/\\[()\[\]]/g,"").replace(/\$/g,"").replace(/\\(?:text|mathrm|mathbf)\{([^{}]*)\}/g,"$1").replace(/\\frac\{([^{}]*)\}\{([^{}]*)\}/g,"($1)/($2)").replace(/\\sqrt\{([^{}]*)\}/g,"√($1)").replace(/\\(?:times|cdot)/g,"×").replace(/\\div/g,"÷").replace(/\\(?:left|right)/g,"").replace(/\^\{?2\}?(?![0-9])/g,"²").replace(/\^\{?3\}?(?![0-9])/g,"³").replace(/\\[,;]|\\quad/g," ").replace(/[{}]/g,"");
 const md=s=>esc(tex(s)).replace(/^#{1,4}\s*(.+)$/gm,"<h3>$1</h3>").replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/^\s*[-*]\s+/gm,"• ").replace(/(^|[^*])\*([^*\n]+)\*/g,"$1<i>$2</i>").replace(/^-{3,}$/gm,"<hr>");
 let cfg;try{cfg=JSON.parse(localStorage.getItem("cfg"))}catch{}
-cfg=cfg||{};cfg.keys=cfg.keys||{};cfg.models=cfg.models||{};cfg.lvl=cfg.lvl||"ثانوي";
+cfg=cfg||{};cfg.keys=cfg.keys||{};cfg.models=cfg.models||{};cfg.lvl=cfg.lvl||"ثانوي";cfg.history=cfg.history||[];
 const save=()=>{try{localStorage.setItem("cfg",JSON.stringify(cfg))}catch{}};
 
 const J=async(url,h,b)=>{
@@ -159,7 +175,12 @@ function chips(){
  const c=$("chips");c.innerHTML="";
  LV.forEach(v=>{const b=document.createElement("button");b.className="chip";b.textContent=v;b.setAttribute("aria-pressed",cfg.lvl===v);b.onclick=()=>{cfg.lvl=v;save();chips()};c.append(b)});
 }
-function openMenu(){$("drawer").inert=false;$("drawer").classList.add("open");$("scrim").classList.add("open")}
+function renderHistory(){
+ const l=$("historyList");l.innerHTML="";
+ if(!cfg.history.length){l.innerHTML='<p class="note">مافيش أسئلة محفوظة لسه.</p>';return}
+ cfg.history.forEach(h=>{const d=document.createElement("div");d.className="history-item";d.textContent=h;d.onclick=()=>{setQ(h);closeMenu()};l.append(d)});
+}
+function openMenu(){renderHistory();$("drawer").inert=false;$("drawer").classList.add("open");$("scrim").classList.add("open")}
 function closeMenu(){$("drawer").classList.remove("open");$("scrim").classList.remove("open");$("drawer").inert=true}
 $("menu").onclick=openMenu;$("close").onclick=closeMenu;$("scrim").onclick=closeMenu;
 
@@ -176,6 +197,7 @@ const fail=e=>'<span class="err">'+esc(String(e.message||e))+"</span>";
 
 $("go").onclick=async()=>{
  const q=$("q").value.trim();if(!q)return;
+ if(!cfg.history.includes(q)){cfg.history.unshift(q);cfg.history=cfg.history.slice(0,10);save()}
  const have=Object.keys(NAMES).filter(id=>cfg.keys[id]);
  const out=$("out");out.innerHTML="";
  if(!have.length){openMenu();return}
@@ -183,9 +205,19 @@ $("go").onclick=async()=>{
  have.forEach(id=>setS(id,"في الانتظار"));
  const base=`أنا طالب مستوى ${cfg.lvl}. الدرس أو السؤال: ${q}\nاكتب بالعربية الواضحة. اكتب الأرقام والمعادلات كنص عادي بس (مثال: 3² + 4² = 5²) من غير LaTeX ولا علامة $.\n`;
  const fin=document.createElement("section");fin.className="final";
- fin.innerHTML='<h2><span class="okc">✓</span>الشرح النهائي<small></small></h2><div class="txt">جاري الشغل…</div>';out.append(fin);
+ fin.innerHTML='<h2><div class="final-title-group"><span class="okc">✓</span>الشرح النهائي<small></small></div><div class="actions-group"><button class="act-btn" id="copyBtn">نسخ</button><button class="act-btn" id="speakBtn">استماع</button></div></h2><div class="txt">جاري الشغل…</div>';out.append(fin);
  fin.scrollIntoView();
  const finTxt=fin.querySelector(".txt"),got={};
+ let raw="";const cb=fin.querySelector("#copyBtn"),sb=fin.querySelector("#speakBtn");
+ cb.onclick=async()=>{if(!raw)return;try{await navigator.clipboard.writeText(raw);cb.textContent="تم النسخ"}catch{cb.textContent="مش متاح"}setTimeout(()=>cb.textContent="نسخ",1500)};
+ sb.onclick=()=>{
+  if(!raw)return;
+  if(!("speechSynthesis" in window)){sb.textContent="مش متاح";return}
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(raw.replace(/[#*•_>-]/g," "));
+  u.lang="ar-SA";u.onerror=()=>{sb.textContent="الصوت مش متاح"};
+  speechSynthesis.speak(u);
+ };
  const ex=have.filter(id=>ROLES[id]);
  const tl=document.createElement("div");tl.className="tl";out.append(tl);
  await Promise.all(ex.map(async id=>{
@@ -202,7 +234,7 @@ $("go").onclick=async()=>{
   :"اشرح الدرس شرحًا كاملًا ومبسطًا مع مثال وملخص.");
  let last=null;
  for(const id of PREF){
-  try{finTxt.innerHTML=md(await ask(id,sp));fin.querySelector("small").textContent="جمّعه "+NAMES[id];fin.classList.add("done");last=null;break}
+  try{const a=await ask(id,sp);raw=tex(a);finTxt.innerHTML=md(a);fin.querySelector("small").textContent="جمّعه "+NAMES[id];fin.classList.add("done");last=null;break}
   catch(e){last=e}
  }
  if(last)finTxt.innerHTML=fail(last);
