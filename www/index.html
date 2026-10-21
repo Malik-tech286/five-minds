@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#4a2bb8">
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>خمس عقول</title>
 <style>
 :root{--bg:#f6f4fb;--card:#fff;--ink:#1d1b3a;--mut:#8b88a6;--line:#e6e2f2;--ind:#3d2bb8;--pur:#7a2cc0;--pink:#f0189a;--lav:#c9b3e6;--sh:0 6px 20px rgba(61,43,184,.12)}
@@ -87,7 +91,7 @@ summary span{font-weight:400;color:var(--mut);margin-inline-start:10px;font-size
 <header>
 <div class="bar">
 <div class="logo"><svg><use href="#lg"/></svg>خمس عقول</div>
-<button id="menu" aria-label="الإعدادات والمفاتيح"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
+<div style="display:flex;gap:6px;align-items:center"><button id="installApp" class="q-chip" hidden>تثبيت التطبيق</button><button id="menu" aria-label="الإعدادات والمفاتيح"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button></div>
 </div>
 <label for="q">الدرس أو السؤال</label>
 <textarea id="q" rows="2" placeholder="مثال: اشرحلي نظرية فيثاغورس"></textarea>
@@ -104,12 +108,14 @@ summary span{font-weight:400;color:var(--mut);margin-inline-start:10px;font-size
 <div class="tiles" id="tiles"></div>
 <div class="chips" id="chips" role="group" aria-label="المستوى"></div>
 <button id="go">اشرحلي</button>
+<p class="note" style="text-align:center;margin-top:-12px">تُحفظ المفاتيح على هذا الجهاز حتى تمسحها من الإعدادات. كل مزوّد قد يفرض رسومًا أو حدود استخدام خاصة به.</p>
 <div id="out"></div>
 </main>
 <div id="scrim"></div>
 <aside id="drawer" inert>
 <h2>الإعدادات <button id="close" aria-label="إغلاق">×</button></h2>
-<p class="note">حط مفتاح (API key) لأي أداة عايز تشغّلها. المفاتيح محفوظة على جهازك بس. أي مفتاح فاضي، الأداة دي بتتخطى. الموديل الفاضي بيستخدم الافتراضي.</p>
+<p class="note">أضف مفتاح API لكل أداة تريد استخدامها. المفاتيح تُحفظ باستمرار على هذا المتصفح والجهاز حتى تحذفها يدويًا؛ لا تضع مفتاحًا على جهاز مشترك. تُرسل المفاتيح مباشرة إلى مزوّد الخدمة المختار ولا ترسلها لنا. أي مفتاح فارغ يتم تخطيه، واسم النموذج الفارغ يستخدم الافتراضي.</p>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0"><button class="act-btn" id="clearKeys">مسح كل المفاتيح</button><button class="act-btn" id="clearHistory">مسح سجل الأسئلة</button></div>
 <div id="cfg"></div>
 <div class="history-section"><h3>سجل الأسئلة السابقة</h3><div id="historyList"></div></div>
 </aside>
@@ -117,7 +123,7 @@ summary span{font-weight:400;color:var(--mut);margin-inline-start:10px;font-size
 const $=id=>document.getElementById(id);
 const setQ=v=>{$("q").value=v};
 const NAMES={claude:"Claude",openai:"ChatGPT",deepseek:"DeepSeek",perplexity:"Perplexity",gemini:"Gemini",groq:"Groq",openrouter:"OpenRouter"};
-const DEF={claude:"claude-sonnet-5-5",openai:"gpt-4o-mini",deepseek:"deepseek-chat",perplexity:"sonar",gemini:"gemini-3.8-flash",groq:"openai/gpt-oss-120b",openrouter:"openrouter/free"};
+const DEF={claude:"claude-3-5-sonnet-latest",openai:"gpt-4o-mini",deepseek:"deepseek-chat",perplexity:"sonar",gemini:"gemini-2.5-flash",groq:"openai/gpt-oss-120b",openrouter:"openrouter/free"};
 const ROLES={
  perplexity:["الباحث","ابحث وهات المعلومات الدقيقة والمحدّثة عن الموضوع مع المصادر."],
  deepseek:["المنطق","اشرح الفكرة خطوة بخطوة بمنطق واضح، وحُلّ مثالًا أو مسألة لو الدرس فيه حسابات."],
@@ -130,7 +136,7 @@ const LV=["ابتدائي","إعدادي","ثانوي","جامعي"];
 const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 const tex=s=>s.replace(/\\[()\[\]]/g,"").replace(/\$/g,"").replace(/\\(?:text|mathrm|mathbf)\{([^{}]*)\}/g,"$1").replace(/\\frac\{([^{}]*)\}\{([^{}]*)\}/g,"($1)/($2)").replace(/\\sqrt\{([^{}]*)\}/g,"√($1)").replace(/\\(?:times|cdot)/g,"×").replace(/\\div/g,"÷").replace(/\\(?:left|right)/g,"").replace(/\^\{?2\}?(?![0-9])/g,"²").replace(/\^\{?3\}?(?![0-9])/g,"³").replace(/\\[,;]|\\quad/g," ").replace(/[{}]/g,"");
 const md=s=>esc(tex(s)).replace(/^#{1,4}\s*(.+)$/gm,"<h3>$1</h3>").replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/^\s*[-*]\s+/gm,"• ").replace(/(^|[^*])\*([^*\n]+)\*/g,"$1<i>$2</i>").replace(/^-{3,}$/gm,"<hr>");
-let cfg;try{cfg=JSON.parse(localStorage.getItem("cfg"))}catch{}
+let cfg;try{cfg=JSON.parse(localStorage.getItem("cfg"))}catch(e){console.warn("تعذر قراءة الإعدادات المحفوظة",e)}
 cfg=cfg||{};cfg.keys=cfg.keys||{};cfg.models=cfg.models||{};cfg.lvl=cfg.lvl||"ثانوي";cfg.history=cfg.history||[];
 const save=()=>{try{localStorage.setItem("cfg",JSON.stringify(cfg))}catch{}};
 
@@ -166,7 +172,7 @@ function tiles(){
   const on=!!cfg.keys[id],s=S[id]||{};
   const b=document.createElement("button");
   b.className="tile"+(on?"":" off")+(s.e?" err":"");
-  b.innerHTML=`<b>${NAMES[id]}</b><small>${ROLES[id]?ROLES[id][0]:"المجمّع"}</small><span class="st">${on?(s.t||"جاهز"):"حط مفتاح"}</span>`;
+  b.innerHTML=`<b>${NAMES[id]}</b><small>${ROLES[id]?ROLES[id][0]:"المجمّع"}</small><span class="st">${on?(s.t||"المفتاح محفوظ"):"أضف مفتاحًا"}</span>`;
   b.onclick=()=>{if(!on)openMenu()};
   el.append(b);
  }
@@ -182,6 +188,12 @@ function renderHistory(){
 }
 function openMenu(){renderHistory();$("drawer").inert=false;$("drawer").classList.add("open");$("scrim").classList.add("open")}
 function closeMenu(){$("drawer").classList.remove("open");$("scrim").classList.remove("open");$("drawer").inert=true}
+$("clearKeys").onclick=()=>{if(!confirm("تمسح كل مفاتيح API المحفوظة على هذا الجهاز؟ لا يمكن التراجع عن ذلك."))return;cfg.keys={};save();for(const input of $("cfg").querySelectorAll('input[type="password"]'))input.value="";tiles()};
+$("clearHistory").onclick=()=>{if(!confirm("تمسح سجل الأسئلة المحفوظ؟"))return;cfg.history=[];save();renderHistory()};
+let installPrompt=null;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installPrompt=e;$("installApp").hidden=false});
+$("installApp").onclick=async()=>{if(!installPrompt)return;installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$("installApp").hidden=true};
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}))}
 $("menu").onclick=openMenu;$("close").onclick=closeMenu;$("scrim").onclick=closeMenu;
 
 for(const id in NAMES){
